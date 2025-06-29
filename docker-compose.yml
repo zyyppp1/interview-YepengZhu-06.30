@@ -1,4 +1,3 @@
-
 services:
   api:
     build: .
@@ -38,7 +37,7 @@ services:
     networks:
       - oxo-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U oxogame"]
+      test: ["CMD-SHELL", "pg_isready -U oxogame -d oxogame_db"]
       interval: 5s
       timeout: 5s
       retries: 5
