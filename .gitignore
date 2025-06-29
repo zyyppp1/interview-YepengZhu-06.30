@@ -1,0 +1,36 @@
+# 二进制文件
+main
+*.exe
+*.dll
+*.so
+*.dylib
+
+# 测试文件
+*.test
+*.out
+
+# 依赖目录
+vendor/
+
+# 环境文件
+.env
+.env.local
+
+# 日志文件
+logs/
+*.log
+
+# IDE 文件
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS 文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+tmp/
+temp/

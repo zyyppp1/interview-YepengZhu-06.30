@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # API 服务
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oxo-game-api
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=oxogame
+      - DB_PASSWORD=oxogame123
+      - DB_NAME=oxogame_db
+      - GIN_MODE=release
+    depends_on:
+      - postgres
+    networks:
+      - oxo-network
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs  # 挂载日志目录
+
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: oxo-game-db
+    environment:
+      - POSTGRES_USER=oxogame
+      - POSTGRES_PASSWORD=oxogame123
+      - POSTGRES_DB=oxogame_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d  # 自动执行初始化脚本
+    networks:
+      - oxo-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oxogame"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存（用于挑战系统的分布式锁）
+  redis:
+    image: redis:7-alpine
+    container_name: oxo-game-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - oxo-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+# 网络配置
+networks:
+  oxo-network:
+    driver: bridge
+
+# 数据卷配置
+volumes:
+  postgres_data:
+  redis_data:
