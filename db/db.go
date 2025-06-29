@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/zyyppp1/interview-YepengZhu-06.30/config"
-	"github.com/zyyppp1/interview-YepengZhu-06.30/models"
+	// "github.com/zyyppp1/interview-YepengZhu-06.30/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -38,28 +38,28 @@ func Init(cfg *config.Config) error {
 		return fmt.Errorf("failed to connect database: %w", err)
 	}
 
-	// 自动迁移
-	if err := AutoMigrate(); err != nil {
-		return fmt.Errorf("failed to migrate database: %w", err)
-	}
+	// // 自动迁移
+	// if err := AutoMigrate(); err != nil {
+	// 	return fmt.Errorf("failed to migrate database: %w", err)
+	// }
 
 	log.Println("Database connected successfully")
 	return nil
 }
 
-// AutoMigrate 自动迁移所有模型
-func AutoMigrate() error {
-	return DB.AutoMigrate(
-		&models.Level{},
-		&models.Player{},
-		&models.Room{},
-		&models.Reservation{},
-		&models.Challenge{},
-		&models.PrizePool{},
-		&models.GameLog{},
-		&models.Payment{},
-	)
-}
+// // AutoMigrate 自动迁移所有模型
+// func AutoMigrate() error {
+// 	return DB.AutoMigrate(
+// 		&models.Level{},
+// 		&models.Player{},
+// 		&models.Room{},
+// 		&models.Reservation{},
+// 		&models.Challenge{},
+// 		&models.PrizePool{},
+// 		&models.GameLog{},
+// 		&models.Payment{},
+// 	)
+// }
 
 // GetDB 获取数据库实例
 func GetDB() *gorm.DB {
