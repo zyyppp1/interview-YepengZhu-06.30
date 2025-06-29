@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yourname/oxo-game-api/api"
-	"github.com/yourname/oxo-game-api/middleware"
+	"github.com/zyyppp1/interview-YepengZhu-06.30/api"
+	"github.com/zyyppp1/interview-YepengZhu-06.30/middleware"
 )
 
 // SetupRouter 配置路由

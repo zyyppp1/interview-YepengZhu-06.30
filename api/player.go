@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/yourname/oxo-game-api/models"
-	"github.com/yourname/oxo-game-api/services"
+	"github.com/zyyppp1/interview-YepengZhu-06.30/models"
+	"github.com/zyyppp1/interview-YepengZhu-06.30/services"
 )
 
 // ListPlayers 获取玩家列表

@@ -4,10 +4,10 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yourname/oxo-game-api/config"
-	"github.com/yourname/oxo-game-api/db"
-	"github.com/yourname/oxo-game-api/routes"
-	"github.com/yourname/oxo-game-api/services"
+	"github.com/zyyppp1/interview-YepengZhu-06.30/config"
+	"github.com/zyyppp1/interview-YepengZhu-06.30/db"
+	"github.com/zyyppp1/interview-YepengZhu-06.30/routes"
+	"github.com/zyyppp1/interview-YepengZhu-06.30/services"
 )
 
 func main() {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/yourname/oxo-game-api/db"
-	"github.com/yourname/oxo-game-api/models"
+	"github.com/zyyppp1/interview-YepengZhu-06.30/db"
+	"github.com/zyyppp1/interview-YepengZhu-06.30/models"
 	"gorm.io/gorm"
 )
 

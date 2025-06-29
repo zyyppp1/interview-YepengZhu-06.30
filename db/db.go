@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/yourname/oxo-game-api/config"
-	"github.com/yourname/oxo-game-api/models"
+	"github.com/zyyppp1/interview-YepengZhu-06.30/config"
+	"github.com/zyyppp1/interview-YepengZhu-06.30/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
