@@ -1,8 +1,9 @@
-version: '3.8'
 
 services:
   api:
     build: .
+    env_file:
+      - .env
     container_name: oxo-api
     ports:
       - "8080:8080"
@@ -11,4 +12,41 @@ services:
       - PORT=8080
       - GIN_MODE=release
       - DB_HOST=postgres
-      - DB_PORT
+      - DB_PORT=5432
+      - DB_USER=oxogame
+      - DB_PASSWORD=oxogame123
+      - DB_NAME=oxogame_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - oxo-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: oxo-postgres
+    environment:
+      - POSTGRES_USER=oxogame
+      - POSTGRES_PASSWORD=oxogame123
+      - POSTGRES_DB=oxogame_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - oxo-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oxogame"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  oxo-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
