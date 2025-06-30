@@ -1,3 +1,6 @@
+
+---
+
 # OXO Game API
 
 基于 Go + Gin + PostgreSQL 的游戏管理系统 API，提供玩家管理、房间预约、无尽挑战、支付处理和日志收集等功能。
@@ -9,6 +12,7 @@
 - [API 文档](#api-文档)
 - [开发指南](#开发指南)
 - [配置说明](#配置说明)
+- [故障排除](#故障排除)
 
 ## 快速开始
 
@@ -29,8 +33,6 @@ cd interview-YepengZhu-06.30
 ```bash
 # 一键启动所有服务
 docker-compose up -d
-或
-docker compose up -d
 
 # 查看服务状态
 docker-compose ps
@@ -76,45 +78,84 @@ docker-compose down -v
 ```
 interview-YepengZhu-06.30/
 ├── api/                    # API 处理器层
-│   ├── challenge.go       # 挑战系统 API
-│   ├── log.go            # 日志系统 API
-│   ├── payment.go        # 支付系统 API
-│   ├── player.go         # 玩家管理 API
-│   └── room.go           # 房间管理 API
+│   ├── challenge.go       # 挑战系统 API 处理器
+│   ├── log.go            # 日志系统 API 处理器
+│   ├── payment.go        # 支付系统 API 处理器
+│   ├── player.go         # 玩家管理 API 处理器
+│   └── room.go           # 房间管理 API 处理器
 ├── cmd/                   # 应用程序入口
 │   └── main.go           # 主程序文件
 ├── config/               # 配置管理
-│   └── config.go         # 配置加载器
+│   └── config.go         # 配置加载和管理
 ├── db/                   # 数据库相关
-│   └── db.go            # 数据库连接和迁移
+│   └── db.go            # 数据库连接初始化和迁移
+├── doc/                  # 文档目录
+│   ├── 支付處理系統 (Payment Processing System)- 测试报告.md
+│   ├── 無盡挑戰系統 (Endless Challenge System) - 测试报告.md
+│   ├── 玩家管理系统 (Player Management System) - 测试报告.md
+│   ├── 遊戲房間管理系統 (Game Room Management System) - 测试报告.md
+│   └── 遊戲日誌收集器 (Game Log Collector) - 测试报告.md
 ├── middleware/           # 中间件
-│   └── logger.go        # 日志和 CORS 中间件
-├── models/              # 数据模型
+│   └── logger.go        # 日志记录和 CORS 中间件
+├── models/              # 数据模型定义
 │   ├── challenge.go     # 挑战和奖池模型
-│   ├── log.go          # 游戏日志模型
+│   ├── log.go          # 游戏日志模型（含 JSONB 类型）
 │   ├── payment.go      # 支付记录模型
 │   ├── player.go       # 玩家和等级模型
 │   └── room.go         # 房间和预约模型
+├── Postman Test/        # Postman 测试集合
+│   └── PostMan 测试.postman_collection.json
 ├── routes/             # 路由配置
-│   └── router.go       # 路由注册
+│   └── router.go       # API 路由注册和中间件配置
+├── scripts/            # 脚本文件
+│   └── init.sql       # 数据库初始化脚本
 ├── services/           # 业务逻辑层
 │   ├── challenge_service.go  # 挑战业务逻辑
 │   ├── init.go              # 服务初始化
 │   ├── payment_service.go   # 支付和日志业务逻辑
-│   ├── player_service.go    # 玩家业务逻辑
-│   └── room_service.go      # 房间业务逻辑
-├── scripts/            # 脚本文件
-│   └── init.sql       # 数据库初始化脚本
+│   ├── player_service.go    # 玩家和等级业务逻辑
+│   └── room_service.go      # 房间和预约业务逻辑
 ├── test/              # 测试文件
-│   └── player_test.go # 玩家测试（待实现）
+│   └── player_test.go # 玩家单元测试（待实现）
 ├── .env               # 环境变量配置
 ├── .gitignore        # Git 忽略文件
 ├── Dockerfile        # Docker 构建文件
-├── docker-compose.yml # Docker Compose 配置
-├── go.mod            # Go 模块定义
-├── go.sum            # Go 依赖版本锁定
-└── Interview2025.md  # 面试题目说明
+├── docker-compose.yml # Docker Compose 编排文件
+├── go.mod            # Go 模块定义（依赖管理）
+├── go.sum            # Go 依赖校验和（确保依赖完整性）
+├── Interview2025.md  # 面试题目要求说明
+└── README.md         # 项目说明文档
 ```
+
+### 各目录详细说明
+
+#### `/api` - API 处理器层
+负责处理 HTTP 请求和响应：
+- 请求参数验证和绑定
+- 调用服务层处理业务逻辑
+- 格式化响应数据
+- 统一错误处理
+
+#### `/services` - 业务逻辑层
+包含所有业务逻辑实现：
+- 数据验证和业务规则
+- 事务管理
+- 调用数据层进行持久化
+- 复杂业务流程编排
+
+#### `/models` - 数据模型层
+定义数据结构和数据库映射：
+- GORM 模型定义
+- 表关联关系
+- 自定义数据类型（如 JSONB）
+- 数据验证规则
+
+#### `/doc` - 文档目录
+包含所有 API 测试报告和文档：
+- 详细的 API 测试用例
+- 请求/响应示例
+- 错误处理说明
+- HTTP 状态码使用规范
 
 ## API 文档
 
@@ -124,11 +165,11 @@ interview-YepengZhu-06.30/
 
 | 功能模块 | 测试报告 | 说明 |
 |---------|---------|------|
-| 玩家管理 | [玩家管理系统测试报告](玩家管理系统%20(Player%20Management%20System)%20-%20测试报告.md) | 玩家 CRUD、等级管理 |
-| 房间管理 | [游戏房间管理系统测试报告](遊戲房間管理系統%20(Game%20Room%20Management%20System)%20-%20测试报告.md) | 房间 CRUD、预约管理 |
-| 挑战系统 | [无尽挑战系统测试报告](無盡挑戰系統%20(Endless%20Challenge%20System)%20-%20测试报告.md) | 挑战参与、结果查询 |
-| 日志系统 | [游戏日志收集器测试报告](遊戲日誌收集器%20(Game%20Log%20Collector)%20-%20测试报告.md) | 操作日志记录、查询 |
-| 支付系统 | [支付处理系统测试报告](支付處理系統%20(Payment%20Processing%20System)-%20测试报告.md) | 多种支付方式处理 |
+| 玩家管理 | [查看测试报告](doc/玩家管理系统%20(Player%20Management%20System)%20-%20测试报告.md) | 玩家 CRUD、等级管理 |
+| 房间管理 | [查看测试报告](doc/遊戲房間管理系統%20(Game%20Room%20Management%20System)%20-%20测试报告.md) | 房间 CRUD、预约管理 |
+| 挑战系统 | [查看测试报告](doc/無盡挑戰系統%20(Endless%20Challenge%20System)%20-%20测试报告.md) | 挑战参与、结果查询 |
+| 日志系统 | [查看测试报告](doc/遊戲日誌收集器%20(Game%20Log%20Collector)%20-%20测试报告.md) | 操作日志记录、查询 |
+| 支付系统 | [查看测试报告](doc/支付處理系統%20(Payment%20Processing%20System)-%20测试报告.md) | 多种支付方式处理 |
 
 ### 🎮 API 端点概览
 
@@ -162,15 +203,31 @@ interview-YepengZhu-06.30/
 - `POST /payments` - 处理支付
 - `GET /payments/{id}` - 获取支付详情
 
-### 💡 API 使用示例
+### 💡 快速测试
 
-查看 [README.md](README.md) 文件获取详细的 API 使用示例和参数说明。
+```bash
+# 测试健康检查
+curl http://localhost:8080/health
+
+# 获取所有等级
+curl http://localhost:8080/api/v1/levels
+
+# 创建新玩家
+curl -X POST "http://localhost:8080/api/v1/players" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "测试玩家",
+    "level_id": 1
+  }'
+```
+
+更多详细测试用例请查看 [doc/](doc/) 目录下的测试报告。
 
 ## 开发指南
 
 ### 本地开发环境设置
 
-1. **安装 Go 1.24+**
+1. **安装 Go 1.21+**
 ```bash
 # 验证 Go 版本
 go version
@@ -178,18 +235,33 @@ go version
 
 2. **安装依赖**
 ```bash
+# 下载所有依赖包
 go mod download
+
+# 整理依赖
+go mod tidy
 ```
 
 3. **设置环境变量**
 ```bash
+# 复制环境变量模板
 cp .env.example .env
+
 # 编辑 .env 文件配置数据库连接
 ```
 
-4. **运行数据库迁移**
+4. **本地数据库设置**
 ```bash
-# 确保 PostgreSQL 已启动
+# 启动 PostgreSQL
+docker run -d \
+  --name postgres-dev \
+  -e POSTGRES_USER=oxogame \
+  -e POSTGRES_PASSWORD=oxogame123 \
+  -e POSTGRES_DB=oxogame_db \
+  -p 5432:5432 \
+  postgres:15-alpine
+
+# 运行数据库迁移
 psql -U oxogame -d oxogame_db -f scripts/init.sql
 ```
 
@@ -198,39 +270,28 @@ psql -U oxogame -d oxogame_db -f scripts/init.sql
 go run cmd/main.go
 ```
 
-### 代码结构说明
+### 代码规范
 
-#### API 层 (`/api`)
-负责处理 HTTP 请求和响应，主要功能：
-- 参数验证
-- 调用服务层
-- 格式化响应
+- 使用 `gofmt` 格式化代码
+- 遵循 Go 官方编码规范
+- 添加必要的注释，特别是导出的函数和类型
+- 错误处理要明确，避免忽略错误
 
-#### 服务层 (`/services`)
-包含业务逻辑，主要功能：
-- 数据验证
-- 业务规则实现
-- 事务管理
-- 调用数据层
+### 测试
 
-#### 模型层 (`/models`)
-定义数据结构和数据库映射：
-- GORM 模型定义
-- 关联关系
-- 数据验证规则
+#### 运行 Postman 测试
+1. 导入 `Postman Test/PostMan 测试.postman_collection.json`
+2. 设置环境变量 `base_url` 为 `http://localhost:8080/api/v1`
+3. 运行测试集合
 
-#### 中间件 (`/middleware`)
-- 请求日志记录
-- CORS 处理
-- 错误恢复
+#### 性能测试
+```bash
+# 使用 Apache Bench
+ab -n 1000 -c 10 http://localhost:8080/api/v1/players
 
-### 添加新功能
-
-1. 在 `models/` 中定义数据模型
-2. 在 `services/` 中实现业务逻辑
-3. 在 `api/` 中创建 API 处理器
-4. 在 `routes/router.go` 中注册路由
-5. 更新数据库迁移脚本
+# 使用 wrk
+wrk -t12 -c400 -d30s http://localhost:8080/api/v1/players
+```
 
 ## 配置说明
 
@@ -246,7 +307,7 @@ PORT=8080
 GIN_MODE=debug          # debug, release
 
 # 数据库配置
-DB_HOST=localhost
+DB_HOST=localhost       # Docker 环境下使用 postgres
 DB_PORT=5432
 DB_USER=oxogame
 DB_PASSWORD=oxogame123
@@ -257,58 +318,83 @@ DB_NAME=oxogame_db
 
 `docker-compose.yml` 包含两个服务：
 - **api**: Go 应用服务
+  - 自动构建镜像
+  - 依赖 postgres 服务健康检查
+  - 挂载环境变量
 - **postgres**: PostgreSQL 数据库
+  - 使用 Alpine 版本（更小的镜像）
+  - 数据持久化到 volume
+  - 自动运行初始化脚本
 
 ### 数据库初始化
 
-`scripts/init.sql` 包含：
-- 表结构创建
-- 索引创建
-- 默认数据插入
-- 初始等级和示例玩家
-
-## 测试
-
-### 运行集成测试
-
-```bash
-# 使用 Postman 集合
-导入 "PostMan 测试.postman_collection.json"
-
-# 或使用 curl 命令
-查看各个测试报告文档中的完整测试命令
-```
-
-### 性能测试
-
-```bash
-# 使用 Apache Bench
-ab -n 1000 -c 10 http://localhost:8080/api/v1/players
-
-# 使用 wrk
-wrk -t12 -c400 -d30s http://localhost:8080/api/v1/players
-```
+`scripts/init.sql` 自动完成：
+- 创建所有必需的表结构
+- 设置索引优化查询性能
+- 插入默认等级数据（5个等级）
+- 插入示例玩家和房间数据
+- 初始化奖池
 
 ## 故障排除
 
 ### 常见问题
 
 1. **数据库连接失败**
-   - 检查 PostgreSQL 是否运行
-   - 验证数据库凭据
-   - 确认网络连接
+   ```bash
+   # 检查 PostgreSQL 容器状态
+   docker-compose ps postgres
+   
+   # 查看数据库日志
+   docker-compose logs postgres
+   ```
 
 2. **端口被占用**
    ```bash
    # 查找占用端口的进程
    lsof -i :8080
-   # 或更改 .env 中的 PORT
+   
+   # 或修改 docker-compose.yml 中的端口映射
    ```
 
-3. **Docker 构建失败**
-   - 确保 Docker 守护进程运行中
-   - 检查 Dockerfile 语法
-   - 清理 Docker 缓存：`docker system prune`
+3. **依赖包下载失败**
+   ```bash
+   # 设置 Go 代理
+   go env -w GOPROXY=https://goproxy.cn,direct
+   
+   # 清理模块缓存
+   go clean -modcache
+   ```
+
+4. **Docker 构建失败**
+   ```bash
+   # 清理 Docker 缓存
+   docker system prune -a
+   
+   # 查看构建日志
+   docker-compose build --no-cache
+   ```
+
+## API 优化方向
+
+1. **性能优化**
+   - 实现数据库连接池配置
+   - 添加 Redis 缓存层
+   - 使用消息队列处理异步任务
+
+2. **安全增强**
+   - 实现 JWT 认证
+   - 添加请求限流
+   - SQL 注入防护
+
+3. **功能扩展**
+   - WebSocket 实时通信
+   - 文件上传支持
+   - API 版本管理
+
+4. **监控和日志**
+   - 集成 Prometheus 监控
+   - 结构化日志输出
+   - 链路追踪
 
 ## 贡献指南
 
