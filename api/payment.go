@@ -1,10 +1,14 @@
+
+// ============================================
+
+// api/payment.go
 package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/models"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/services"
 )
@@ -12,7 +16,7 @@ import (
 // ProcessPayment 处理支付
 func ProcessPayment(c *gin.Context) {
 	var req struct {
-		PlayerID       uuid.UUID              `json:"player_id" binding:"required"`
+		PlayerID       uint                   `json:"player_id" binding:"required"`
 		PaymentMethod  string                 `json:"payment_method" binding:"required"`
 		Amount         float64                `json:"amount" binding:"required,gt=0"`
 		PaymentDetails map[string]interface{} `json:"payment_details,omitempty"`
@@ -44,7 +48,7 @@ func ProcessPayment(c *gin.Context) {
 
 	// 返回响应
 	c.JSON(http.StatusCreated, gin.H{
-		"payment_id":     payment.ID.String(),
+		"payment_id":     payment.ID,
 		"transaction_id": payment.TransactionID,
 		"status":         payment.Status,
 		"message":        getPaymentMessage(payment.Status),
@@ -54,7 +58,7 @@ func ProcessPayment(c *gin.Context) {
 
 // GetPayment 获取支付详情
 func GetPayment(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid payment ID",
@@ -62,7 +66,7 @@ func GetPayment(c *gin.Context) {
 		return
 	}
 
-	payment, err := services.Payment.GetByID(id)
+	payment, err := services.Payment.GetByID(uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),

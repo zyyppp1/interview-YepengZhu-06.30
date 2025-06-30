@@ -1,3 +1,4 @@
+// services/room_service.go
 package services
 
 import (
@@ -5,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/db"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/models"
 	"gorm.io/gorm"
@@ -14,10 +14,10 @@ import (
 // RoomService 房间服务接口
 type RoomService interface {
 	Create(room *models.Room) error
-	GetByID(id uuid.UUID) (*models.Room, error)
+	GetByID(id uint) (*models.Room, error)
 	GetAll(status string) ([]*models.Room, error)
-	Update(id uuid.UUID, updates map[string]interface{}) error
-	Delete(id uuid.UUID) error
+	Update(id uint, updates map[string]interface{}) error
+	Delete(id uint) error
 }
 
 type roomService struct {
@@ -40,7 +40,7 @@ func (s *roomService) Create(room *models.Room) error {
 }
 
 // GetByID 根据ID获取房间
-func (s *roomService) GetByID(id uuid.UUID) (*models.Room, error) {
+func (s *roomService) GetByID(id uint) (*models.Room, error) {
 	var room models.Room
 	err := s.db.First(&room, "id = ?", id).Error
 	if err != nil {
@@ -67,7 +67,7 @@ func (s *roomService) GetAll(status string) ([]*models.Room, error) {
 }
 
 // Update 更新房间信息
-func (s *roomService) Update(id uuid.UUID, updates map[string]interface{}) error {
+func (s *roomService) Update(id uint, updates map[string]interface{}) error {
 	// 验证状态值
 	if status, ok := updates["status"].(string); ok {
 		validStatuses := []string{"available", "occupied", "maintenance"}
@@ -94,7 +94,7 @@ func (s *roomService) Update(id uuid.UUID, updates map[string]interface{}) error
 }
 
 // Delete 删除房间
-func (s *roomService) Delete(id uuid.UUID) error {
+func (s *roomService) Delete(id uint) error {
 	result := s.db.Delete(&models.Room{}, "id = ?", id)
 	if result.Error != nil {
 		return result.Error
@@ -108,8 +108,8 @@ func (s *roomService) Delete(id uuid.UUID) error {
 // ReservationService 预约服务接口
 type ReservationService interface {
 	Create(reservation *models.Reservation) error
-	GetAll(roomID *uuid.UUID, date *time.Time, limit int) ([]*models.Reservation, error)
-	CheckConflict(roomID uuid.UUID, date time.Time, startTime, endTime string) (bool, error)
+	GetAll(roomID *uint, date *time.Time, limit int) ([]*models.Reservation, error)
+	CheckConflict(roomID uint, date time.Time, startTime, endTime string) (bool, error)
 }
 
 type reservationService struct {
@@ -162,7 +162,7 @@ func (s *reservationService) Create(reservation *models.Reservation) error {
 }
 
 // GetAll 获取预约列表
-func (s *reservationService) GetAll(roomID *uuid.UUID, date *time.Time, limit int) ([]*models.Reservation, error) {
+func (s *reservationService) GetAll(roomID *uint, date *time.Time, limit int) ([]*models.Reservation, error) {
 	var reservations []*models.Reservation
 	query := s.db.Preload("Room").Preload("Player")
 
@@ -188,7 +188,7 @@ func (s *reservationService) GetAll(roomID *uuid.UUID, date *time.Time, limit in
 }
 
 // CheckConflict 检查时间冲突
-func (s *reservationService) CheckConflict(roomID uuid.UUID, date time.Time, startTime, endTime string) (bool, error) {
+func (s *reservationService) CheckConflict(roomID uint, date time.Time, startTime, endTime string) (bool, error) {
 	var count int64
 	err := s.db.Model(&models.Reservation{}).
 		Where("room_id = ? AND reservation_date = ? AND status = ?", roomID, date.Format("2006-01-02"), "active").

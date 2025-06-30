@@ -1,5 +1,5 @@
 -- ============================================
--- 完整的数据库初始化脚本（修复版）
+-- 完整的数据库初始化脚本（递增ID版本）
 -- ============================================
 
 -- 创建必要的扩展
@@ -9,28 +9,28 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 1. 创建所有表结构
 -- ============================================
 
--- 创建等级表
+-- 创建等级表（使用递增ID）
 CREATE TABLE IF NOT EXISTS levels (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id SERIAL PRIMARY KEY,  -- 从1开始自动递增
     name VARCHAR(30) UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 创建玩家表（注意：name字段添加UNIQUE约束）
+-- 创建玩家表（使用递增ID）
 CREATE TABLE IF NOT EXISTS players (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(50) UNIQUE NOT NULL,  -- 添加UNIQUE约束
-    level_id UUID NOT NULL REFERENCES levels(id),
+    id SERIAL PRIMARY KEY,  -- 从1开始自动递增
+    name VARCHAR(50) UNIQUE NOT NULL,
+    level_id INTEGER NOT NULL REFERENCES levels(id),
     balance DECIMAL(10,2) DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
--- 创建房间表（name字段添加UNIQUE约束）
+-- 创建房间表（使用递增ID）
 CREATE TABLE IF NOT EXISTS rooms (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(50) UNIQUE NOT NULL,  -- 添加UNIQUE约束
+    id SERIAL PRIMARY KEY,  -- 从1开始自动递增
+    name VARCHAR(50) UNIQUE NOT NULL,
     description TEXT,
     status VARCHAR(20) DEFAULT 'available',
     max_players INTEGER DEFAULT 4,
@@ -39,11 +39,11 @@ CREATE TABLE IF NOT EXISTS rooms (
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
--- 创建预约表
+-- 创建预约表（主键使用递增ID，外键使用INTEGER）
 CREATE TABLE IF NOT EXISTS reservations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    room_id UUID NOT NULL REFERENCES rooms(id),
-    player_id UUID NOT NULL REFERENCES players(id),
+    id SERIAL PRIMARY KEY,
+    room_id INTEGER NOT NULL REFERENCES rooms(id),
+    player_id INTEGER NOT NULL REFERENCES players(id),
     reservation_date DATE NOT NULL,
     start_time VARCHAR(5) NOT NULL,
     end_time VARCHAR(5) NOT NULL,
@@ -53,10 +53,10 @@ CREATE TABLE IF NOT EXISTS reservations (
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
--- 创建挑战表
+-- 创建挑战表（主键使用递增ID，外键使用INTEGER）
 CREATE TABLE IF NOT EXISTS challenges (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id UUID NOT NULL REFERENCES players(id),
+    id SERIAL PRIMARY KEY,
+    player_id INTEGER NOT NULL REFERENCES players(id),
     amount DECIMAL(10,2) DEFAULT 20.01,
     is_winner BOOLEAN DEFAULT FALSE,
     prize_amount DECIMAL(10,2) DEFAULT 0,
@@ -67,20 +67,20 @@ CREATE TABLE IF NOT EXISTS challenges (
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
--- 创建奖池表
+-- 创建奖池表（使用递增ID）
 CREATE TABLE IF NOT EXISTS prize_pools (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id SERIAL PRIMARY KEY,
     current_amount DECIMAL(10,2) DEFAULT 0,
-    last_winner_id UUID,
+    last_winner_id INTEGER,  -- 引用players.id
     last_win_amount DECIMAL(10,2) DEFAULT 0,
     last_win_time TIMESTAMP WITH TIME ZONE,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 创建游戏日志表
+-- 创建游戏日志表（主键使用递增ID，外键使用INTEGER）
 CREATE TABLE IF NOT EXISTS game_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id UUID REFERENCES players(id),
+    id SERIAL PRIMARY KEY,
+    player_id INTEGER REFERENCES players(id),
     action_type VARCHAR(50) NOT NULL,
     details JSONB,
     ip VARCHAR(45),
@@ -90,10 +90,10 @@ CREATE TABLE IF NOT EXISTS game_logs (
     deleted_at TIMESTAMP WITH TIME ZONE
 );
 
--- 创建支付表
+-- 创建支付表（主键使用递增ID，外键使用INTEGER）
 CREATE TABLE IF NOT EXISTS payments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id UUID NOT NULL REFERENCES players(id),
+    id SERIAL PRIMARY KEY,
+    player_id INTEGER NOT NULL REFERENCES players(id),
     payment_method VARCHAR(50) NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     currency VARCHAR(3) DEFAULT 'CNY',
@@ -123,108 +123,55 @@ CREATE INDEX IF NOT EXISTS idx_challenges_player_created ON challenges(player_id
 -- 3. 插入默认数据
 -- ============================================
 
--- 插入等级数据
-INSERT INTO levels (id, name, created_at) VALUES 
-    (gen_random_uuid(), '初级玩家', NOW()),
-    (gen_random_uuid(), '中级玩家', NOW()),
-    (gen_random_uuid(), '高级玩家', NOW()),
-    (gen_random_uuid(), '大师级玩家', NOW()),
-    (gen_random_uuid(), '传奇玩家', NOW())
+-- 插入等级数据（ID将自动从1开始递增）
+INSERT INTO levels (name, created_at) VALUES 
+    ('初级玩家', NOW()),        -- ID: 1
+    ('中级玩家', NOW()),        -- ID: 2
+    ('高级玩家', NOW()),        -- ID: 3
+    ('大师级玩家', NOW()),      -- ID: 4
+    ('传奇玩家', NOW())         -- ID: 5
 ON CONFLICT (name) DO NOTHING;
 
--- 插入示例玩家（简化版本，去掉可能导致问题的复杂逻辑）
-DO $$
-DECLARE
-    beginner_level_id UUID;
-    intermediate_level_id UUID;
-    advanced_level_id UUID;
-BEGIN
-    -- 获取等级ID
-    SELECT id INTO beginner_level_id FROM levels WHERE name = '初级玩家';
-    SELECT id INTO intermediate_level_id FROM levels WHERE name = '中级玩家';
-    SELECT id INTO advanced_level_id FROM levels WHERE name = '高级玩家';
-    
-    -- 检查是否获取到了等级ID
-    IF beginner_level_id IS NOT NULL AND intermediate_level_id IS NOT NULL AND advanced_level_id IS NOT NULL THEN
-        -- 逐个插入玩家，避免批量插入的问题
-        INSERT INTO players (name, level_id, balance) VALUES ('张三', beginner_level_id, 100.0) ON CONFLICT (name) DO NOTHING;
-        INSERT INTO players (name, level_id, balance) VALUES ('李四', intermediate_level_id, 200.0) ON CONFLICT (name) DO NOTHING;
-        INSERT INTO players (name, level_id, balance) VALUES ('王五', advanced_level_id, 300.0) ON CONFLICT (name) DO NOTHING;
-        INSERT INTO players (name, level_id, balance) VALUES ('赵六', beginner_level_id, 150.0) ON CONFLICT (name) DO NOTHING;
-        INSERT INTO players (name, level_id, balance) VALUES ('钱七', intermediate_level_id, 250.0) ON CONFLICT (name) DO NOTHING;
-        
-        RAISE NOTICE '成功插入玩家数据';
-    ELSE
-        RAISE NOTICE '未能获取等级ID，跳过玩家插入';
-    END IF;
-END $$;
+-- 插入示例玩家（ID将自动从1开始递增）
+INSERT INTO players (name, level_id, balance) VALUES 
+    ('张三', 1, 100.0),        -- 玩家ID: 1, 等级ID: 1(初级玩家)
+    ('李四', 2, 200.0),        -- 玩家ID: 2, 等级ID: 2(中级玩家)
+    ('王五', 3, 300.0),        -- 玩家ID: 3, 等级ID: 3(高级玩家)
+    ('赵六', 1, 150.0),        -- 玩家ID: 4, 等级ID: 1(初级玩家)
+    ('钱七', 2, 250.0)         -- 玩家ID: 5, 等级ID: 2(中级玩家)
+ON CONFLICT (name) DO NOTHING;
 
--- 插入示例房间
+-- 插入示例房间（ID将自动从1开始递增）
 INSERT INTO rooms (name, description, status, max_players) VALUES
-    ('游戏室A', '适合初学者的房间', 'available', 4),
-    ('游戏室B', '中级玩家专用房间', 'available', 6),
-    ('游戏室C', '高级玩家竞技房间', 'available', 8),
-    ('VIP包厢', '私人定制房间', 'available', 2),
-    ('训练室', '新手练习专用', 'maintenance', 10)
+    ('游戏室A', '适合初学者的房间', 'available', 4),     -- 房间ID: 1
+    ('游戏室B', '中级玩家专用房间', 'available', 6),     -- 房间ID: 2
+    ('游戏室C', '高级玩家竞技房间', 'available', 8),     -- 房间ID: 3
+    ('VIP包厢', '私人定制房间', 'available', 2),        -- 房间ID: 4
+    ('训练室', '新手练习专用', 'maintenance', 10)        -- 房间ID: 5
 ON CONFLICT (name) DO NOTHING;
 
 -- 初始化奖池
 INSERT INTO prize_pools (current_amount, last_win_amount) VALUES (0.0, 0.0);
 
--- 创建示例预约
-DO $$
-DECLARE
-    room_a_id UUID;
-    room_b_id UUID;
-    player1_id UUID;
-    player2_id UUID;
-BEGIN
-    -- 获取房间和玩家ID
-    SELECT id INTO room_a_id FROM rooms WHERE name = '游戏室A' LIMIT 1;
-    SELECT id INTO room_b_id FROM rooms WHERE name = '游戏室B' LIMIT 1;
-    SELECT id INTO player1_id FROM players WHERE name = '张三' LIMIT 1;
-    SELECT id INTO player2_id FROM players WHERE name = '李四' LIMIT 1;
-    
-    -- 创建示例预约
-    IF room_a_id IS NOT NULL AND room_b_id IS NOT NULL AND player1_id IS NOT NULL AND player2_id IS NOT NULL THEN
-        INSERT INTO reservations (room_id, player_id, reservation_date, start_time, end_time, status) VALUES
-            (room_a_id, player1_id, CURRENT_DATE + INTERVAL '1 day', '14:00', '16:00', 'active'),
-            (room_b_id, player2_id, CURRENT_DATE + INTERVAL '2 days', '10:00', '12:00', 'active');
-        
-        RAISE NOTICE '成功创建示例预约';
-    ELSE
-        RAISE NOTICE '未能获取房间或玩家ID，跳过预约创建';
-    END IF;
-END $$;
+-- 创建示例预约（使用具体的数字ID）
+INSERT INTO reservations (room_id, player_id, reservation_date, start_time, end_time, status) VALUES
+    (1, 1, CURRENT_DATE + INTERVAL '1 day', '14:00', '16:00', 'active'),    -- 张三预约游戏室A
+    (2, 2, CURRENT_DATE + INTERVAL '2 days', '10:00', '12:00', 'active'),   -- 李四预约游戏室B
+    (3, 3, CURRENT_DATE + INTERVAL '1 day', '16:00', '18:00', 'active'),    -- 王五预约游戏室C
+    (4, 4, CURRENT_DATE + INTERVAL '3 days', '19:00', '21:00', 'active')    -- 赵六预约VIP包厢
+ON CONFLICT DO NOTHING;
 
--- 插入示例日志
-DO $$
-DECLARE
-    player1_id UUID;
-    player2_id UUID;
-BEGIN
-    SELECT id INTO player1_id FROM players WHERE name = '张三' LIMIT 1;
-    SELECT id INTO player2_id FROM players WHERE name = '李四' LIMIT 1;
-    
-    IF player1_id IS NOT NULL THEN
-        INSERT INTO game_logs (player_id, action_type, details, ip, user_agent) VALUES
-            (player1_id, 'register', '{"registration_method": "username"}', '192.168.1.100', 'Mozilla/5.0'),
-            (player1_id, 'login', '{"login_time": "' || NOW() || '"}', '192.168.1.100', 'Mozilla/5.0');
-    END IF;
-    
-    IF player2_id IS NOT NULL THEN
-        INSERT INTO game_logs (player_id, action_type, details, ip, user_agent) VALUES
-            (player2_id, 'register', '{"registration_method": "email"}', '192.168.1.101', 'Chrome/91.0'),
-            (player2_id, 'login', '{"login_time": "' || NOW() || '"}', '192.168.1.101', 'Chrome/91.0');
-    END IF;
-    
-    IF player1_id IS NOT NULL OR player2_id IS NOT NULL THEN
-        RAISE NOTICE '成功插入示例日志';
-    END IF;
-END $$;
+-- 插入示例日志（使用具体的数字ID）
+INSERT INTO game_logs (player_id, action_type, details, ip, user_agent) VALUES
+    (1, 'register', '{"registration_method": "username"}', '192.168.1.100', 'Mozilla/5.0'),
+    (1, 'login', '{"login_time": "' || NOW() || '"}', '192.168.1.100', 'Mozilla/5.0'),
+    (2, 'register', '{"registration_method": "email"}', '192.168.1.101', 'Chrome/91.0'),
+    (2, 'login', '{"login_time": "' || NOW() || '"}', '192.168.1.101', 'Chrome/91.0'),
+    (3, 'register', '{"registration_method": "phone"}', '192.168.1.102', 'Safari/14.0'),
+    (3, 'enter_room', '{"room_id": 3, "room_name": "游戏室C"}', '192.168.1.102', 'Safari/14.0');
 
 -- ============================================
--- 4. 输出初始化完成信息
+-- 4. 验证并输出初始化完成信息
 -- ============================================
 DO $$
 DECLARE
@@ -245,11 +192,20 @@ BEGIN
     RAISE NOTICE '===========================================';
     RAISE NOTICE '数据库初始化完成！';
     RAISE NOTICE '已创建：';
-    RAISE NOTICE '- % 个等级', level_count;
-    RAISE NOTICE '- % 个玩家', player_count;
-    RAISE NOTICE '- % 个房间', room_count;
+    RAISE NOTICE '- % 个等级 (ID: 1-%)', level_count, level_count;
+    RAISE NOTICE '- % 个玩家 (ID: 1-%)', player_count, player_count;
+    RAISE NOTICE '- % 个房间 (ID: 1-%)', room_count, room_count;
     RAISE NOTICE '- % 个预约', reservation_count;
     RAISE NOTICE '- % 条日志', log_count;
     RAISE NOTICE '- 奖池已初始化，当前金额: %', pool_amount;
+    RAISE NOTICE '===========================================';
+    
+    -- 显示具体的ID映射
+    RAISE NOTICE '等级ID映射：';
+    RAISE NOTICE '1: 初级玩家, 2: 中级玩家, 3: 高级玩家, 4: 大师级玩家, 5: 传奇玩家';
+    RAISE NOTICE '玩家ID映射：';
+    RAISE NOTICE '1: 张三(初级), 2: 李四(中级), 3: 王五(高级), 4: 赵六(初级), 5: 钱七(中级)';
+    RAISE NOTICE '房间ID映射：';
+    RAISE NOTICE '1: 游戏室A, 2: 游戏室B, 3: 游戏室C, 4: VIP包厢, 5: 训练室';
     RAISE NOTICE '===========================================';
 END $$;

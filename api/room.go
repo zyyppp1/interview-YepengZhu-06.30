@@ -1,3 +1,4 @@
+// api/room.go
 package api
 
 import (
@@ -6,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/models"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/services"
 )
@@ -66,7 +66,7 @@ func CreateRoom(c *gin.Context) {
 
 // GetRoom 获取单个房间
 func GetRoom(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid room ID",
@@ -74,7 +74,7 @@ func GetRoom(c *gin.Context) {
 		return
 	}
 
-	room, err := services.Room.GetByID(id)
+	room, err := services.Room.GetByID(uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -90,7 +90,7 @@ func GetRoom(c *gin.Context) {
 
 // UpdateRoom 更新房间
 func UpdateRoom(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid room ID",
@@ -128,14 +128,14 @@ func UpdateRoom(c *gin.Context) {
 		return
 	}
 
-	if err := services.Room.Update(id, updates); err != nil {
+	if err := services.Room.Update(uint(id), updates); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
-	room, _ := services.Room.GetByID(id)
+	room, _ := services.Room.GetByID(uint(id))
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    room,
@@ -144,7 +144,7 @@ func UpdateRoom(c *gin.Context) {
 
 // DeleteRoom 删除房间
 func DeleteRoom(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid room ID",
@@ -152,7 +152,7 @@ func DeleteRoom(c *gin.Context) {
 		return
 	}
 
-	if err := services.Room.Delete(id); err != nil {
+	if err := services.Room.Delete(uint(id)); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
 		})
@@ -168,12 +168,13 @@ func DeleteRoom(c *gin.Context) {
 // ListReservations 获取预约列表
 func ListReservations(c *gin.Context) {
 	// 解析查询参数
-	var roomID *uuid.UUID
+	var roomID *uint
 	var date *time.Time
 	
 	if roomIDStr := c.Query("room_id"); roomIDStr != "" {
-		if id, err := uuid.Parse(roomIDStr); err == nil {
-			roomID = &id
+		if id, err := strconv.ParseUint(roomIDStr, 10, 32); err == nil {
+			roomIDUint := uint(id)
+			roomID = &roomIDUint
 		}
 	}
 	
@@ -205,8 +206,8 @@ func ListReservations(c *gin.Context) {
 // CreateReservation 创建预约
 func CreateReservation(c *gin.Context) {
 	var req struct {
-		RoomID          uuid.UUID `json:"room_id" binding:"required"`
-		PlayerID        uuid.UUID `json:"player_id" binding:"required"`
+		RoomID          uint      `json:"room_id" binding:"required"`
+		PlayerID        uint      `json:"player_id" binding:"required"`
 		ReservationDate time.Time `json:"reservation_date" binding:"required"`
 		StartTime       string    `json:"start_time" binding:"required"`
 		EndTime         string    `json:"end_time" binding:"required"`

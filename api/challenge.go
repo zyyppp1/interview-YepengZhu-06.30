@@ -1,3 +1,4 @@
+// api/challenge.go
 package api
 
 import (
@@ -5,15 +6,14 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/services"
 )
 
 // JoinChallenge 参加挑战
 func JoinChallenge(c *gin.Context) {
 	var req struct {
-		PlayerID uuid.UUID `json:"player_id" binding:"required"`
-		Amount   float64   `json:"amount" binding:"required"`
+		PlayerID uint    `json:"player_id" binding:"required"`
+		Amount   float64 `json:"amount" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -36,7 +36,7 @@ func JoinChallenge(c *gin.Context) {
 	_, nextTime, _ := services.Challenge.CheckCooldown(req.PlayerID)
 
 	c.JSON(http.StatusCreated, gin.H{
-		"challenge_id":   challenge.ID.String(),
+		"challenge_id":   challenge.ID,
 		"status":         "started",
 		"message":        "Challenge started, result will be available in 30 seconds",
 		"start_time":     challenge.StartedAt,

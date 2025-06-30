@@ -1,10 +1,10 @@
+// services/player_service.go
 package services
 
 import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/db"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/models"
 	"gorm.io/gorm"
@@ -13,10 +13,10 @@ import (
 // PlayerService 玩家服务接口
 type PlayerService interface {
 	Create(player *models.Player) error
-	GetByID(id uuid.UUID) (*models.Player, error)
+	GetByID(id uint) (*models.Player, error)
 	GetAll(page, pageSize int) ([]*models.Player, int64, error)
-	Update(id uuid.UUID, updates map[string]interface{}) error
-	Delete(id uuid.UUID) error
+	Update(id uint, updates map[string]interface{}) error
+	Delete(id uint) error
 }
 
 type playerService struct {
@@ -49,7 +49,7 @@ func (s *playerService) Create(player *models.Player) error {
 }
 
 // GetByID 根据ID获取玩家
-func (s *playerService) GetByID(id uuid.UUID) (*models.Player, error) {
+func (s *playerService) GetByID(id uint) (*models.Player, error) {
 	var player models.Player
 	err := s.db.Preload("Level").First(&player, "id = ?", id).Error
 	if err != nil {
@@ -89,7 +89,7 @@ func (s *playerService) GetAll(page, pageSize int) ([]*models.Player, int64, err
 }
 
 // Update 更新玩家信息
-func (s *playerService) Update(id uuid.UUID, updates map[string]interface{}) error {
+func (s *playerService) Update(id uint, updates map[string]interface{}) error {
 	// 检查玩家是否存在
 	var player models.Player
 	if err := s.db.First(&player, "id = ?", id).Error; err != nil {
@@ -116,7 +116,7 @@ func (s *playerService) Update(id uuid.UUID, updates map[string]interface{}) err
 }
 
 // Delete 删除玩家（软删除）
-func (s *playerService) Delete(id uuid.UUID) error {
+func (s *playerService) Delete(id uint) error {
 	result := s.db.Delete(&models.Player{}, "id = ?", id)
 	if result.Error != nil {
 		return result.Error

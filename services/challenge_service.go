@@ -1,3 +1,4 @@
+// services/challenge_service.go
 package services
 
 import (
@@ -6,7 +7,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/db"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/models"
 	"gorm.io/gorm"
@@ -14,10 +14,10 @@ import (
 
 // ChallengeService 挑战服务接口
 type ChallengeService interface {
-	JoinChallenge(playerID uuid.UUID, amount float64) (*models.Challenge, error)
-	ProcessChallengeResult(challengeID uuid.UUID) error
+	JoinChallenge(playerID uint, amount float64) (*models.Challenge, error)
+	ProcessChallengeResult(challengeID uint) error
 	GetRecentResults(limit int) ([]*models.Challenge, error)
-	CheckCooldown(playerID uuid.UUID) (bool, time.Time, error)
+	CheckCooldown(playerID uint) (bool, time.Time, error)
 }
 
 type challengeService struct {
@@ -32,7 +32,7 @@ func NewChallengeService() ChallengeService {
 }
 
 // JoinChallenge 参加挑战
-func (s *challengeService) JoinChallenge(playerID uuid.UUID, amount float64) (*models.Challenge, error) {
+func (s *challengeService) JoinChallenge(playerID uint, amount float64) (*models.Challenge, error) {
 	// 验证金额
 	if amount != 20.01 {
 		return nil, errors.New("challenge amount must be 20.01")
@@ -112,7 +112,7 @@ func (s *challengeService) JoinChallenge(playerID uuid.UUID, amount float64) (*m
 }
 
 // ProcessChallengeResult 处理挑战结果
-func (s *challengeService) ProcessChallengeResult(challengeID uuid.UUID) error {
+func (s *challengeService) ProcessChallengeResult(challengeID uint) error {
 	// 获取挑战记录
 	var challenge models.Challenge
 	if err := s.db.First(&challenge, "id = ?", challengeID).Error; err != nil {
@@ -175,7 +175,7 @@ func (s *challengeService) ProcessChallengeResult(challengeID uuid.UUID) error {
 			PlayerID:   &challenge.PlayerID,
 			ActionType: "challenge_result",
 			Details: models.JSONB{
-				"challenge_id": challengeID.String(),
+				"challenge_id": challenge.ID,
 				"is_winner":    true,
 				"prize_amount": challenge.PrizeAmount,
 			},
@@ -209,7 +209,7 @@ func (s *challengeService) GetRecentResults(limit int) ([]*models.Challenge, err
 }
 
 // CheckCooldown 检查冷却时间
-func (s *challengeService) CheckCooldown(playerID uuid.UUID) (bool, time.Time, error) {
+func (s *challengeService) CheckCooldown(playerID uint) (bool, time.Time, error) {
 	var lastChallenge models.Challenge
 	err := s.db.Where("player_id = ?", playerID).
 		Order("created_at DESC").
@@ -232,3 +232,4 @@ func (s *challengeService) CheckCooldown(playerID uuid.UUID) (bool, time.Time, e
 
 	return true, time.Now(), nil
 }
+

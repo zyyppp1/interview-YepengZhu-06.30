@@ -1,3 +1,4 @@
+// api/player.go
 package api
 
 import (
@@ -5,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/models"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/services"
 )
@@ -54,8 +54,8 @@ func ListPlayers(c *gin.Context) {
 // CreatePlayer 创建玩家
 func CreatePlayer(c *gin.Context) {
 	var req struct {
-		Name    string    `json:"name" binding:"required,min=2,max=50"`
-		LevelID uuid.UUID `json:"level_id" binding:"required"`
+		Name    string `json:"name" binding:"required,min=2,max=50"`
+		LevelID uint   `json:"level_id" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -87,7 +87,7 @@ func CreatePlayer(c *gin.Context) {
 // GetPlayer 获取单个玩家
 func GetPlayer(c *gin.Context) {
 	// 解析ID
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid player ID",
@@ -96,7 +96,7 @@ func GetPlayer(c *gin.Context) {
 	}
 
 	// 获取玩家
-	player, err := services.Player.GetByID(id)
+	player, err := services.Player.GetByID(uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -113,7 +113,7 @@ func GetPlayer(c *gin.Context) {
 // UpdatePlayer 更新玩家
 func UpdatePlayer(c *gin.Context) {
 	// 解析ID
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid player ID",
@@ -135,10 +135,8 @@ func UpdatePlayer(c *gin.Context) {
 	if name, ok := req["name"].(string); ok && name != "" {
 		updates["name"] = name
 	}
-	if levelID, ok := req["level_id"].(string); ok {
-		if uid, err := uuid.Parse(levelID); err == nil {
-			updates["level_id"] = uid
-		}
+	if levelIDFloat, ok := req["level_id"].(float64); ok {
+		updates["level_id"] = uint(levelIDFloat)
 	}
 
 	if len(updates) == 0 {
@@ -149,7 +147,7 @@ func UpdatePlayer(c *gin.Context) {
 	}
 
 	// 更新玩家
-	if err := services.Player.Update(id, updates); err != nil {
+	if err := services.Player.Update(uint(id), updates); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -157,7 +155,7 @@ func UpdatePlayer(c *gin.Context) {
 	}
 
 	// 获取更新后的玩家信息
-	player, _ := services.Player.GetByID(id)
+	player, _ := services.Player.GetByID(uint(id))
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    player,
@@ -167,7 +165,7 @@ func UpdatePlayer(c *gin.Context) {
 // DeletePlayer 删除玩家
 func DeletePlayer(c *gin.Context) {
 	// 解析ID
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid player ID",
@@ -176,7 +174,7 @@ func DeletePlayer(c *gin.Context) {
 	}
 
 	// 删除玩家
-	if err := services.Player.Delete(id); err != nil {
+	if err := services.Player.Delete(uint(id)); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
 		})
