@@ -29,6 +29,8 @@ cd interview-YepengZhu-06.30
 ```bash
 # 一键启动所有服务
 docker-compose up -d
+或
+docker compose up -d
 
 # 查看服务状态
 docker-compose ps
