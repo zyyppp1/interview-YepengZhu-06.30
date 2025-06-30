@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/db"
 	"github.com/zyyppp1/interview-YepengZhu-06.30/models"
 	"gorm.io/gorm"
@@ -15,7 +14,7 @@ import (
 // PaymentService 支付服务接口
 type PaymentService interface {
 	ProcessPayment(payment *models.Payment) error
-	GetByID(id uuid.UUID) (*models.Payment, error)
+	GetByID(id uint) (*models.Payment, error)
 	SimulatePaymentGateway(method string, amount float64) (bool, string)
 }
 
@@ -88,7 +87,7 @@ func (s *paymentService) ProcessPayment(payment *models.Payment) error {
 			PlayerID:   &payment.PlayerID,
 			ActionType: "payment",
 			Details: models.JSONB{
-				"payment_id":     payment.ID.String(),
+				"payment_id":     payment.ID,
 				"amount":         payment.Amount,
 				"payment_method": payment.PaymentMethod,
 				"status":         "success",
@@ -120,7 +119,7 @@ func (s *paymentService) ProcessPayment(payment *models.Payment) error {
 }
 
 // GetByID 根据ID获取支付记录
-func (s *paymentService) GetByID(id uuid.UUID) (*models.Payment, error) {
+func (s *paymentService) GetByID(id uint) (*models.Payment, error) {
 	var payment models.Payment
 	err := s.db.Preload("Player").First(&payment, "id = ?", id).Error
 	if err != nil {
@@ -171,7 +170,7 @@ func (s *paymentService) SimulatePaymentGateway(method string, amount float64) (
 // GameLogService 游戏日志服务
 type GameLogService interface {
 	Create(log *models.GameLog) error
-	GetAll(playerID *uuid.UUID, actionType string, startTime, endTime *time.Time, limit int) ([]*models.GameLog, error)
+	GetAll(playerID *uint, actionType string, startTime, endTime *time.Time, limit int) ([]*models.GameLog, error)
 }
 
 type gameLogService struct {
@@ -188,7 +187,7 @@ func NewGameLogService() GameLogService {
 // Create 创建日志
 func (s *gameLogService) Create(log *models.GameLog) error {
 	// 验证操作类型
-	validActions := []string{"register", "login", "logout", "enter_room", "exit_room", "join_challenge", "challenge_result"}
+	validActions := []string{"register", "login", "logout", "enter_room", "exit_room", "join_challenge", "challenge_result", "payment"}
 	isValid := false
 	for _, action := range validActions {
 		if action == log.ActionType {
@@ -212,7 +211,7 @@ func (s *gameLogService) Create(log *models.GameLog) error {
 }
 
 // GetAll 获取日志列表
-func (s *gameLogService) GetAll(playerID *uuid.UUID, actionType string, startTime, endTime *time.Time, limit int) ([]*models.GameLog, error) {
+func (s *gameLogService) GetAll(playerID *uint, actionType string, startTime, endTime *time.Time, limit int) ([]*models.GameLog, error) {
 	var logs []*models.GameLog
 	query := s.db.Preload("Player").Order("created_at DESC")
 

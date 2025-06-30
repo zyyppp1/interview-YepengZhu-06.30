@@ -1,16 +1,16 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 // Payment 支付记录
 type Payment struct {
-	ID             uuid.UUID      `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
-	PlayerID       uuid.UUID      `gorm:"type:uuid;not null" json:"player_id"`
+	ID             uint           `gorm:"primaryKey;autoIncrement" json:"id"`
+	PlayerID       uint           `gorm:"not null" json:"player_id"`
 	PaymentMethod  string         `gorm:"not null" json:"payment_method"` // credit_card, bank_transfer, third_party, blockchain
 	Amount         float64        `gorm:"not null" json:"amount"`
 	Currency       string         `gorm:"default:'CNY'" json:"currency"`
@@ -27,12 +27,9 @@ type Payment struct {
 
 // BeforeCreate 创建前的钩子
 func (p *Payment) BeforeCreate(tx *gorm.DB) error {
-	if p.ID == uuid.Nil {
-		p.ID = uuid.New()
-	}
 	// 生成交易ID
 	if p.TransactionID == "" {
-		p.TransactionID = "TXN" + uuid.New().String()[:8]
+		p.TransactionID = fmt.Sprintf("TXN%d%d", time.Now().Unix(), p.PlayerID)
 	}
 	return nil
 }
